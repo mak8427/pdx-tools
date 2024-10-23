@@ -56,7 +56,7 @@ function AchievementPlatform({
     <Card
       className={cx(
         "relative min-w-64 max-w-64 shadow-lg transition-transform duration-100 lg:hover:scale-105",
-        className,
+        className
       )}
     >
       <div
@@ -64,7 +64,7 @@ function AchievementPlatform({
           "absolute left-0 right-0 mx-auto text-center text-white",
           save.rank === 1 && "-top-9 h-16 w-16",
           save.rank === 2 && "-top-5 h-11 w-11",
-          save.rank === 3 && "top-0.5 h-7 w-7",
+          save.rank === 3 && "top-0.5 h-7 w-7"
         )}
       >
         <TrophyIcon className="fill-slate-200 stroke-slate-800 stroke-[0.5] drop-shadow-lg" />
@@ -75,7 +75,7 @@ function AchievementPlatform({
           "h-8 rounded-t-lg shadow-lg",
           save.rank === 1 && "bg-yellow-500",
           save.rank === 2 && "bg-slate-400",
-          save.rank === 3 && "bg-amber-800",
+          save.rank === 3 && "bg-amber-800"
         )}
       ></div>
 
@@ -128,7 +128,7 @@ function AchievementPlatform({
               <p
                 className={cx(
                   "all-small-caps leading-tight tracking-tighter",
-                  difficultyColor(save.game_difficulty),
+                  difficultyColor(save.game_difficulty)
                 )}
               >
                 (ON {difficultyText(save.game_difficulty)})
@@ -145,7 +145,7 @@ function AchievementPlatform({
             "hidden text-center font-semibold lg:block",
             save.rank === 1 && "mt-14 text-9xl",
             save.rank === 2 && "mt-10 text-7xl",
-            save.rank === 3 && "mt-6 text-5xl",
+            save.rank === 3 && "mt-6 text-5xl"
           )}
         >
           {save.rank}
@@ -182,30 +182,24 @@ export const AchievementPage = ({
 }) => {
   const [gold, silver, bronze, ...rest] = data.saves;
   return (
-    <AchievementLayout
-      achievementId={`${data.achievement.id}`}
-      description={data.achievement.description}
-      title={data.achievement.name}
-    >
-      <div className="flex flex-col gap-10">
-        <AchievementPodium saves={[gold, silver, bronze]} />
-        {data.goldDate ? (
-          <div className="text-center">
-            <p className="text-xl">
-              Earn gold by completing the achievement before:
-            </p>
-            <p className="text-3xl font-semibold">{data.goldDate}</p>
-          </div>
-        ) : null}
-        {rest.length ? (
-          <div className="flex flex-col gap-4">
-            <h2 className="text-center text-lg font-semibold">
-              Other completions:
-            </h2>
-            <RecordTable records={rest} />
-          </div>
-        ) : null}
-      </div>
-    </AchievementLayout>
+    <div className="flex flex-col gap-10">
+      <AchievementPodium saves={[gold, silver, bronze]} />
+      {data.goldDate ? (
+        <div className="text-center">
+          <p className="text-xl">
+            Earn gold by completing the achievement before:
+          </p>
+          <p className="text-3xl font-semibold">{data.goldDate}</p>
+        </div>
+      ) : null}
+      {rest.length ? (
+        <div className="flex flex-col gap-4">
+          <h2 className="text-center text-lg font-semibold">
+            Other completions:
+          </h2>
+          <RecordTable records={rest} />
+        </div>
+      ) : null}
+    </div>
   );
 };

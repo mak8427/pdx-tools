@@ -271,9 +271,6 @@ export async function getAchievementDb(achievement: Achievement) {
   const goldDate = gold ? eu4DaysToDate(gold.weighted_score.days) : undefined;
 
   return {
-    achievement: {
-      ...achievement,
-    },
     goldDate,
     saves: leaderboard,
   };
