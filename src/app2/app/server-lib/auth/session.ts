@@ -27,8 +27,6 @@ export async function usePdxSession() {
   }
 }
 
-// const secret = new TextEncoder().encode(getEnv("SESSION_SECRET"));
-// const sessionCookie = "sid";
 const SessionPayloadSchema = z.object({
   userId: z.string(),
   steamId: z.string(),

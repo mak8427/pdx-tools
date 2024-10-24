@@ -3,8 +3,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { TimeAgo } from "@/components/TimeAgo";
 import { useSession } from "@/features/account";
 import { UserSaveTable } from "@/features/account/UserSaveTable";
-import { dbPool, getUser, saveView, table, toApiSave } from "@/server-lib/db";
-import { NotFoundError } from "@/server-lib/errors";
+import { type UserSaves, getUser } from "@/server-lib/db";
 import { sessionSelect } from "@/services/appApi";
 import { Await, createFileRoute, defer } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/start";
@@ -32,7 +31,7 @@ function UserComponent() {
   );
 }
 
-function UserPage({ user }: { user: Awaited<ReturnType<typeof fetchUser>> }) {
+function UserPage({ user }: { user: UserSaves }) {
   const session = useSession();
   const isPrivileged = sessionSelect.isPrivileged(session, {
     user_id: user.user_info.user_id,

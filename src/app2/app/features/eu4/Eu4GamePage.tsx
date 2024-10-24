@@ -3,10 +3,9 @@ import { Button } from "@/components/Button";
 import { NewestSavesTable } from "./components/NewestSavesTable";
 import { DropdownMenu } from "@/components/DropdownMenu";
 import { Link } from "@/components/Link";
-import { ErrorBoundary } from "@sentry/react";
 import { Alert } from "@/components/Alert";
-import { Csr } from "@/components/Csr";
 import { LoadingState } from "@/components/LoadingState";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const saves = [
   ["1.29", "/eu4/saves/10loz22jqw1l"],
@@ -54,9 +53,7 @@ export const Eu4GamePage = () => {
               </div>
             )}
           >
-            <Csr>
-              <NewestSavesTable />
-            </Csr>
+            <NewestSavesTable />
           </ErrorBoundary>
         </Suspense>
       </div>

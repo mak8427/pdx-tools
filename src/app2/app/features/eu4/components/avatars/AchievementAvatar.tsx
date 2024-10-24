@@ -23,11 +23,12 @@ export const AchievementAvatar = ({
     data,
     spriteCell: { width: 64, height: 64 },
   });
-  const index = data[id];
-  if (index === undefined) {
+
+  if (!(id in data)) {
     return null;
   }
 
+  const index = data[id as keyof typeof data];
   return (
     <Link className={className} key={id} href={`/eu4/achievements/${id}`}>
       <Sprite

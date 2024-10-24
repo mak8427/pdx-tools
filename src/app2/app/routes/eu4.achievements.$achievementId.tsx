@@ -1,14 +1,15 @@
+import { Alert } from "@/components/Alert";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WebPage } from "@/components/layout";
 import { LoadingState } from "@/components/LoadingState";
 import {
   AchievementLayout,
   AchievementPage,
 } from "@/features/eu4/AchievementPage";
+import { seo } from "@/lib/seo";
 import { fetchAchievement, findAchievement } from "@/server-lib/fn/achievement";
-import { ErrorBoundary } from "@sentry/react";
 import { Await, createFileRoute, defer } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/start";
-import { Suspense } from "react";
 
 export const findAchievementFn = createServerFn(
   "GET",
@@ -32,6 +33,11 @@ export const Route = createFileRoute("/eu4/achievements/$achievementId")({
       savesPromise: defer(fetchAchievementFn(achievement)),
     };
   },
+  meta: ({ loaderData }) =>
+    seo({
+      title: `${loaderData.achievement.name} Leaderboard`,
+      description: `Top EU4 saves in a leaderboard for achievement ${loaderData.achievement.name}: ${loaderData.achievement.description}`,
+    }),
   component: Eu4Achievement,
 });
 
@@ -44,22 +50,20 @@ function Eu4Achievement() {
         description={achievement.description}
         title={achievement.name}
       >
-        <Suspense fallback={<LoadingState />}>
-          <ErrorBoundary
-            fallback={({ error }) => (
-              <div className="m-8">
-                <Alert.Error
-                  className="px-4 py-2"
-                  msg={`Failed to fetch leaderboard: ${error}`}
-                />
-              </div>
-            )}
-          >
-            <Await promise={savesPromise}>
-              {(saves) => <AchievementPage achievement={saves} />}
-            </Await>
-          </ErrorBoundary>
-        </Suspense>
+        <ErrorBoundary
+          fallback={({ error }) => (
+            <div className="m-8">
+              <Alert.Error
+                className="px-4 py-2"
+                msg={`Failed to fetch leaderboard: ${error}`}
+              />
+            </div>
+          )}
+        >
+          <Await promise={savesPromise} fallback={<LoadingState />}>
+            {(saves) => <AchievementPage achievement={saves} />}
+          </Await>
+        </ErrorBoundary>
       </AchievementLayout>
     </WebPage>
   );

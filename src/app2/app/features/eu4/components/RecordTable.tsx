@@ -9,9 +9,9 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { Table } from "@/components/Table";
 import { DataTable } from "@/components/DataTable";
 import { Link } from "@/components/Link";
-import { AchievementResponse } from "@/server-lib/fn/achievement";
+import { AchievementApiResponse } from "@/routes/api/achievements.$achievementId";
 
-type AchievementData = AchievementResponse;
+type AchievementData = AchievementApiResponse;
 
 export type RankedSave = AchievementData["saves"][number];
 interface RecordTableProps {

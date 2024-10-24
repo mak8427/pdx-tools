@@ -14,12 +14,11 @@ import type { Achievement, Difficulty } from "@/server-lib/wasm/wasm_app";
 import type { Eu4Worker } from "@/features/eu4/worker";
 import type { SavePostResponse, UploadMetadaInput } from "@/server-lib/models";
 import { createCompressionWorker } from "@/features/compress";
-import { identify } from "@/lib/events";
 import { captureException } from "@/lib/captureException";
 import { PdxSession } from "@/server-lib/auth/session";
 import { SaveResponse } from "@/routes/api/saves.$saveId";
-import { AchievementResponse } from "@/server-lib/fn/achievement";
-import { NewestSaveResponse } from "@/routes/api/new";
+import { fetchSaves } from "@/server-lib/fn/new";
+import { AchievementApiResponse } from "@/routes/api/achievements.$achievementId";
 export type { GameDifficulty } from "@/server-lib/save-parsing-types";
 export type { Achievement, Difficulty as AchievementDifficulty };
 
@@ -107,7 +106,7 @@ export const pdxApi = {
       useSuspenseQuery({
         queryKey: pdxKeys.achievement(id),
         queryFn: () =>
-          fetchOkJson<AchievementResponse>(`/api/achievements/${id}`),
+          fetchOkJson<AchievementApiResponse>(`/api/achievements/${id}`),
         select: (data) => ({
           ...data,
           saves: data.saves.map((x, i) => ({ ...x, rank: i + 1 })),
@@ -150,14 +149,7 @@ export const pdxApi = {
       useSuspenseInfiniteQuery({
         queryKey: pdxKeys.newSaves(),
         queryFn: ({ pageParam }) =>
-          fetchOkJson<NewestSaveResponse>(
-            "/api/new" +
-              (!pageParam
-                ? ""
-                : `?${new URLSearchParams({
-                    cursor: pageParam,
-                  })}`),
-          ),
+          fetchSaves({ cursor: pageParam }),
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage, _pages) => lastPage.cursor,
       }),

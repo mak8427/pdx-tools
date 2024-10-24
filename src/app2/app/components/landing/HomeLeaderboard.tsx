@@ -1,12 +1,12 @@
 import { Suspense } from "react";
 import { LoadingState } from "../LoadingState";
-import { ErrorBoundary } from "@sentry/react";
 import { pdxApi } from "@/services/appApi";
 import { AchievementPodium } from "@/features/eu4/AchievementPage";
 import { cx } from "class-variance-authority";
 import { AchievementAvatar } from "@/features/eu4/components/avatars";
 import { Link } from "../Link";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { ErrorBoundary } from "../ErrorBoundary";
 
 let globalShow = false;
 
@@ -26,7 +26,7 @@ const HomeLeaderboardImpl = () => {
             size={40}
             id={achievementQuery.data.achievement.id}
           />
-          <Link href={`/eu4/achievements/${achievementId}`}>
+          <Link to="/eu4/achievements/$achievementId" params={{achievementId}}>
             {achievementQuery.data.achievement.name}
           </Link>
         </div>

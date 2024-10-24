@@ -1,4 +1,9 @@
-import { Outlet, ScrollRestoration, createRootRoute, useRouter } from "@tanstack/react-router";
+import {
+  Outlet,
+  ScrollRestoration,
+  createRootRouteWithContext,
+  useRouter,
+} from "@tanstack/react-router";
 import {
   Body,
   createServerFn,
@@ -12,8 +17,7 @@ import appCss from "@/styles/styles.css?url";
 import * as React from "react";
 import { usePdxSession } from "@/server-lib/auth/session";
 import { SessionProvider } from "@/features/account";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/services/appApi";
+import { QueryClient } from "@tanstack/react-query";
 import { Tooltip } from "@/components/Tooltip";
 import { Toaster } from "@/components/Toaster";
 import { ErrorCatcher } from "@/features/errors";
@@ -25,8 +29,11 @@ import {
 } from "@/lib/compatibility";
 import { emitEvent } from "@/lib/events";
 import { PostHogProvider } from "posthog-js/react";
+import { pdxApi, pdxKeys } from "@/services/appApi";
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient
+}>()({
   meta: () => [
     {
       charSet: "utf-8",
@@ -36,14 +43,22 @@ export const Route = createRootRoute({
       content: "width=device-width, initial-scale=1",
     },
     {
-      title: "TanStack Start Starter",
+      name: "color-scheme",
+      content: "light dark",
+    },
+    { name: "og:type", content: "website" },
+    {
+      title: "PDX Tools",
     },
   ],
-  beforeLoad: async () => {
-    const session = await fetchUser();
-    return {
-      session,
-    };
+  beforeLoad: async ({ context }) => {
+    const session = await context.queryClient.ensureQueryData({
+      queryKey: [...pdxKeys.all, "session"],
+      queryFn: () => fetchUser(),
+      revalidateIfStale: true,
+      staleTime: 30000
+    })
+    return { session };
   },
   component: RootComponent,
   links: () => [
@@ -57,7 +72,6 @@ const fetchUser = createServerFn("GET", usePdxSession);
 function RootComponent() {
   const { session } = Route.useRouteContext();
   return (
-    <QueryClientProvider client={queryClient}>
       <SessionProvider profile={session}>
         <Tooltip.Provider delayDuration={300}>
           <PostHog>
@@ -68,7 +82,6 @@ function RootComponent() {
           <Toaster />
         </Tooltip.Provider>
       </SessionProvider>
-    </QueryClientProvider>
   );
 }
 

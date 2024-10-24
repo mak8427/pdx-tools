@@ -20,5 +20,3 @@ export function findAchievement(params: { achievementId: string }) {
   }
   return achievement;
 }
-
-export type AchievementResponse = Awaited<ReturnType<typeof fetchAchievement>>;

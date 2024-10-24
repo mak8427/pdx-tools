@@ -9,7 +9,8 @@ import { TimeAgo } from "@/components/TimeAgo";
 import { Link } from "@/components/Link";
 import { difficultyColor, difficultyText } from "@/lib/difficulty";
 import { Tooltip } from "@/components/Tooltip";
-import { AchievementResponse } from "@/server-lib/fn/achievement";
+import { AchievementApiResponse } from "@/routes/api/achievements.$achievementId";
+import { fetchAchievement } from "@/server-lib/fn/achievement";
 
 export const AchievementLayout = ({
   achievementId,
@@ -178,7 +179,7 @@ export const AchievementPodium = ({
 export const AchievementPage = ({
   achievement: data,
 }: {
-  achievement: AchievementResponse;
+  achievement: Awaited<ReturnType<typeof fetchAchievement>>;
 }) => {
   const [gold, silver, bronze, ...rest] = data.saves;
   return (
