@@ -1,0 +1,11 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "pages-pdx-tools"
+compatibility_date = "2024-09-25"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+MY_VARIABLE = "my-value"
+
+[[hyperdrive]]
+binding = "PDX_DB"
+id = "52bcc7b655d44776a6e42672fd11b388"

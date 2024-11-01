@@ -1,9 +1,8 @@
 import dayjs from "dayjs";
-import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { GameDifficulty, Save, saves, users } from "./schema";
 import { ParsedFile } from "../save-parser";
-import { NextRequest, NextResponse } from "next/server";
 import { sql, eq, desc, and, isNotNull, inArray, asc } from "drizzle-orm";
 import { NotFoundError } from "../errors";
 import { Achievement } from "../wasm/wasm_app";
@@ -14,8 +13,6 @@ export {
   type GameDifficulty,
   type NewSave,
 } from "./schema";
-
-const { Pool } = pg;
 
 export const userView = {
   get userName() {
@@ -137,9 +134,7 @@ export type DbTransaction = Parameters<
 export type DbRoute = { dbConn: Promise<DbConnection> };
 
 function createDbPool() {
-  const pool = new Pool({
-    connectionString: import.meta.env["VITE_DATABASE_URL"],
-  });
+  const pool = postgres(import.meta.env["VITE_DATABASE_URL"]);
   return {
     pool,
     orm: drizzle(pool),
@@ -149,21 +144,6 @@ function createDbPool() {
 let dbDrizzle: ReturnType<typeof createDbPool> | undefined;
 export function dbPool() {
   return (dbDrizzle ??= createDbPool());
-}
-
-export function withDb<T = unknown, R = {}>(
-  fn: (
-    req: NextRequest,
-    context: R & DbRoute,
-  ) => Promise<NextResponse<T> | Response>,
-) {
-  return async (
-    req: NextRequest,
-    ctxt: R,
-  ): Promise<NextResponse<T> | Response> => {
-    const dbConn = Promise.resolve(dbPool().orm);
-    return await fn(req, { ...ctxt, dbConn });
-  };
 }
 
 export async function dbDisconnect() {

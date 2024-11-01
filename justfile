@@ -77,7 +77,7 @@ publish-app:
 
 build-app: prep-frontend
   cd src/docs && npm run build
-  cd src/docs/build && cp -r assets blog.html changelog.html docs.html img ../../app/public/.
+  cd src/docs/build && cp -r assets blog.html changelog.html docs.html img ../../app2/public/.
   cd src/app && npm run build
 
 build-docker:
@@ -152,7 +152,7 @@ build-wasm: build-wasm-dev
     mv "$MY_TMP" "$1"
   }
 
-  optimize src/app/src/server-lib/wasm/wasm_app_bg.wasm &
+  optimize src/app2/app/server-lib/wasm/wasm_app_bg.wasm &
   optimize src/wasm-compress/pkg/wasm_compress_bg.wasm &
   optimize src/wasm-ck3/pkg/wasm_ck3_bg.wasm &
   optimize src/wasm-eu4/pkg/wasm_eu4_bg.wasm &
@@ -162,7 +162,7 @@ build-wasm: build-wasm-dev
   wait
 
 build-wasm-dev:
-  wasm-pack build -t web src/wasm-app --out-dir {{justfile_directory()}}/src/app/src/server-lib/wasm
+  wasm-pack build -t web src/wasm-app --out-dir {{justfile_directory()}}/src/app2/app/server-lib/wasm
   wasm-pack build -t web src/wasm-compress
   wasm-pack build -t web src/wasm-ck3
   wasm-pack build -t web src/wasm-eu4
@@ -293,7 +293,7 @@ prep-frontend:
   done;
 
   # Create DLC spritesheet
-  cd src/app/src/features/eu4/components/dlc-list
+  cd src/app2/app/features/eu4/components/dlc-list
   N=$(ls dlc-images | wc -l)
   COLS=$(echo $N | awk '{s=sqrt($0); print s == int(s) ? s : int(s) + 1}')
   montage -tile ${COLS}x -background transparent -define webp:lossless=true -mode concatenate "dlc-images/*" dlc-sprites.webp
@@ -303,7 +303,7 @@ prep-frontend:
   cd -
 
   # Create icons spritesheet
-  cd src/app/src/features/eu4/components/icons
+  cd src/app2/app/features/eu4/components/icons
   N=$(ls *.png | wc -l)
   COLS=$(echo $N | awk '{s=sqrt($0); print s == int(s) ? s : int(s) + 1}')
   montage -tile ${COLS}x -mode concatenate -geometry '32x32>' -background transparent *.png icons.webp
@@ -341,7 +341,7 @@ prep-frontend:
   done;
 
   # Generate EU4 game asset hooks
-  OUTPUT=src/app/src/lib/game_gen.ts
+  OUTPUT=src/app2/app/lib/game_gen.ts
   rm -f "$OUTPUT"
 
   readarray -t VERSIONS < <(ls assets/game/eu4/ | grep -v common | sort -n)

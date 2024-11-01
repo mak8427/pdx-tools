@@ -1,3 +1,10 @@
+public/assets
+public/blog*
+public/changelog*
+public/docs*
+public/img
+*_gen.ts
+
 node_modules
 package-lock.json
 yarn.lock
