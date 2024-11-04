@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
-import { getEu4Worker } from "@/features/eu4/worker";
-import { Eu4Worker } from "./bridge";
+import { Eu4Worker, getEu4Worker } from "@/features/eu4/worker";
 import { getErrorMessage } from "@/lib/getErrorMessage";
 import { useOnNewSave } from "./useOnNewSave";
 import { captureException } from "@/lib/captureException";

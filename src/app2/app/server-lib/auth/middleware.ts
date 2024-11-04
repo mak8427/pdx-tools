@@ -26,7 +26,7 @@ export function withAuth<
         db
           .select({ apiKey: table.users.apiKey, account: table.users.account })
           .from(table.users)
-          .where(eq(table.users.userId, creds.username)),
+          .where(eq(table.users.userId, creds.username))
       );
       const user = users[0];
 
@@ -40,7 +40,7 @@ export function withAuth<
         session: { uid: creds.username, account: user.account },
       });
     } else {
-      const session = await usePdxSession();
+      const session = await usePdxSession(args.request.headers.get("Cookie"));
       if (session.kind === "guest") {
         return unauthResponse();
       }
@@ -65,6 +65,6 @@ export function withAdmin<
       }
 
       return fn(req, ctxt);
-    },
+    }
   );
 }

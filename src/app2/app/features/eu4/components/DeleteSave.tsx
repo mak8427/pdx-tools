@@ -13,6 +13,7 @@ interface DeleteSaveProps extends ButtonProps {
 export const DeleteSave = ({ saveId, ...rest }: DeleteSaveProps) => {
   const [open, setOpen] = useState(false);
   const saveDeletion = pdxApi.save.useDelete();
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>

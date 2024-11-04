@@ -3,45 +3,64 @@ import { LoadingState } from "@/components/LoadingState";
 import { TimeAgo } from "@/components/TimeAgo";
 import { useSession } from "@/features/account";
 import { UserSaveTable } from "@/features/account/UserSaveTable";
-import { type UserSaves, getUser } from "@/server-lib/db";
-import { sessionSelect } from "@/services/appApi";
-import { Await, createFileRoute, defer } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/start";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { getUser } from "@/server-lib/db";
+import { pdxApi, pdxKeys, sessionSelect } from "@/services/appApi";
+import { defer, LoaderFunctionArgs } from "@remix-run/cloudflare";
+import { Await, useLoaderData, useParams } from "@remix-run/react";
+import { dehydrate, DehydratedState, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import { Suspense } from "react";
 
-const fetchUser = createServerFn("GET", async (userId: string) => {
-  return getUser(userId);
-});
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+  const { userId } = params;
+  if (!userId) {
+    throw new Response("Missing user", {
+      status: 400,
+    });
+  }
 
-export const Route = createFileRoute("/users/$userId")({
-  loader: ({ params: { userId } }) => {
-    return { userPromise: defer(fetchUser(userId)) };
-  },
-  component: UserComponent,
-});
+  const queryClient = new QueryClient();
+  const prefetch = queryClient.fetchQuery({
+    queryKey: pdxKeys.user(userId),
+    queryFn: () => getUser(userId),
+    retry: false,
+  }).then(() => dehydrate(queryClient));
 
-function UserComponent() {
-  const { userPromise } = Route.useLoaderData();
+  return defer({
+    prefetch,
+  });
+};
+
+export default function UserRoute() {
+  const { prefetch } = useLoaderData<typeof loader>();
+  const { userId } = useParams();
 
   return (
     <WebPage>
-      <Await promise={userPromise} fallback={<LoadingState />}>
-        {(user) => <UserPage user={user} />}
-      </Await>
+      <Suspense fallback={<LoadingState />}>
+        <Await resolve={prefetch}>
+          {(dehydratedState: DehydratedState) => (
+            <HydrationBoundary state={dehydratedState}>
+              <UserPage userId={userId!} />
+            </HydrationBoundary>
+          )}
+        </Await>
+      </Suspense>
     </WebPage>
   );
 }
 
-function UserPage({ user }: { user: UserSaves }) {
+function UserPage({ userId }: { userId: string }) {
+  const { data: user } = pdxApi.user.useGet(userId);
   const session = useSession();
   const isPrivileged = sessionSelect.isPrivileged(session, {
     user_id: user.user_info.user_id,
   });
 
+  useDocumentTitle(`${user.user_info.user_name} saves - PDX Tools`);
+
   return (
     <div className="mx-auto max-w-5xl">
-      {/* <Head>
-    <title>{user.user_info.user_name} saves - PDX Tools</title>
-  </Head> */}
       <div className="p-5">
         <h1 className="text-4xl">
           {user.user_info.user_name || `User: ${user.user_info.user_id}`}

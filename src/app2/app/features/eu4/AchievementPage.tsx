@@ -9,8 +9,7 @@ import { TimeAgo } from "@/components/TimeAgo";
 import { Link } from "@/components/Link";
 import { difficultyColor, difficultyText } from "@/lib/difficulty";
 import { Tooltip } from "@/components/Tooltip";
-import { AchievementApiResponse } from "@/routes/api/achievements.$achievementId";
-import { fetchAchievement } from "@/server-lib/fn/achievement";
+import { type fetchAchievement } from "@/server-lib/fn/achievement";
 
 export const AchievementLayout = ({
   achievementId,

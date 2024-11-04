@@ -96,7 +96,7 @@ export function SaveCard({
           {isPrivileged && (
             <DeleteSave saveId={save.id} variant="ghost" shape="none" />
           )}
-          <Link href={`/eu4/saves/${save.id}`} target="_blank">
+          <Link to={`/eu4/saves/${save.id}`} target="_blank">
             <ArrowTopRightOnSquareIcon className="h-8 w-8" />
           </Link>
         </div>

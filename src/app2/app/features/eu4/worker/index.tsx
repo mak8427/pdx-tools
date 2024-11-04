@@ -1,18 +1,18 @@
 import { wrap } from "comlink";
-import { type Eu4WorkerModule } from "./bridge";
 export { useEu4Worker } from "./useEu4Worker";
 export { useAnalysisWorker } from "./useAnalysisWorker";
-export { type Eu4Worker } from "./bridge";
 export { type FileObservationFrequency } from "./init";
+import { type Eu4Worker, type Eu4WorkerModule } from "./types";
+export * from "./types";
 
-function createWorker() {
+function createWorker(): Eu4Worker {
   const rawWorker = new Worker(new URL("./bridge", import.meta.url), {
     type: "module",
   });
   return wrap<Eu4WorkerModule>(rawWorker);
 }
 
-let worker: undefined | ReturnType<typeof createWorker>;
+let worker: undefined | Eu4Worker;
 export function getEu4Worker() {
   return (worker ??= createWorker());
 }

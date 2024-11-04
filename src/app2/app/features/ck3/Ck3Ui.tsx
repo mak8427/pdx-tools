@@ -1,7 +1,6 @@
 import { useEffect, useReducer } from "react";
 import { logMs } from "@/lib/log";
 import { timeit } from "@/lib/timeit";
-import Head from "next/head";
 import { getCk3Worker } from "./worker";
 import { MeltButton } from "@/components/MeltButton";
 import { Ck3Metadata } from "./worker/types";
@@ -10,6 +9,7 @@ import { emitEvent } from "@/lib/events";
 import { Alert } from "@/components/Alert";
 import { getErrorMessage } from "@/lib/getErrorMessage";
 import { pdxAbortController } from "@/lib/abortController";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export type Ck3SaveFile = { save: { file: File } };
 
@@ -123,13 +123,11 @@ function useLoadCk3(input: Ck3SaveFile) {
 
 type Ck3PageProps = Ck3SaveFile & { meta: Ck3Metadata };
 const Ck3Page = ({ save, meta }: Ck3PageProps) => {
+  useDocumentTitle(`${save.file.name.replace(".ck3", "")} - CK3 (${
+          meta.version
+        }) - PDX Tools`)
   return (
     <main className="mx-auto mt-4 max-w-screen-lg">
-      <Head>
-        <title>{`${save.file.name.replace(".ck3", "")} - CK3 (${
-          meta.version
-        }) - PDX Tools`}</title>
-      </Head>
       <div className="mx-auto flex max-w-prose flex-col gap-4">
         <h2 className="text-2xl font-bold">CK3</h2>
         <p>

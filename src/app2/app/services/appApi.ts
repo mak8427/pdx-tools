@@ -1,12 +1,10 @@
 import { epochOf } from "@/lib/dates";
 import { fetchOk, fetchOkJson, sendJson } from "@/lib/fetch";
 import {
-  MutationCache,
-  QueryCache,
   QueryClient,
-  type UseQueryResult,
   useMutation,
   useQuery,
+  useQueryClient,
   useSuspenseInfiniteQuery,
   useSuspenseQuery,
 } from "@tanstack/react-query";
@@ -14,11 +12,11 @@ import type { Achievement, Difficulty } from "@/server-lib/wasm/wasm_app";
 import type { Eu4Worker } from "@/features/eu4/worker";
 import type { SavePostResponse, UploadMetadaInput } from "@/server-lib/models";
 import { createCompressionWorker } from "@/features/compress";
-import { captureException } from "@/lib/captureException";
 import { PdxSession } from "@/server-lib/auth/session";
-import { SaveResponse } from "@/routes/api/saves.$saveId";
-import { fetchSaves } from "@/server-lib/fn/new";
-import { AchievementApiResponse } from "@/routes/api/achievements.$achievementId";
+import { NewestSaveResponse } from "@/routes/api.new";
+import { UserSaves } from "@/server-lib/db";
+import { SaveResponse } from "@/routes/api.saves.$saveId";
+import { AchievementApiResponse } from "@/routes/api.achievements.$achievementId";
 export type { GameDifficulty } from "@/server-lib/save-parsing-types";
 export type { Achievement, Difficulty as AchievementDifficulty };
 
@@ -54,7 +52,7 @@ export type SkanUserSaves = {
 
 export const sessionSelect = {
   isLoggedIn: (
-    session: PdxSession,
+    session: PdxSession
   ): session is Extract<PdxSession, { kind: "user" }> =>
     session.kind === "user",
 
@@ -63,29 +61,11 @@ export const sessionSelect = {
 
   isPrivileged: (
     session: PdxSession,
-    { user_id }: Partial<{ user_id: string }>,
+    { user_id }: Partial<{ user_id: string }>
   ) =>
     sessionSelect.isLoggedIn(session) &&
     (session.account == "admin" || session.userId === user_id),
 };
-
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30 * 1000,
-    },
-  },
-  queryCache: new QueryCache({
-    onError(error, _query) {
-      captureException(error);
-    },
-  }),
-  mutationCache: new MutationCache({
-    onError(error, _variables, _context, _mutation) {
-      captureException(error);
-    },
-  }),
-});
 
 export const pdxKeys = {
   all: ["pdx"] as const,
@@ -123,6 +103,12 @@ export const pdxApi = {
   },
 
   session: {
+    useCurrent: () =>
+      useSuspenseQuery({
+        queryKey: pdxKeys.profile(),
+        queryFn: () => fetchOkJson<PdxSession>("/api/profile"),
+      }),
+
     useSkanderbegSaves: () =>
       useQuery({
         queryKey: pdxKeys.skanderbegUser(),
@@ -149,26 +135,39 @@ export const pdxApi = {
       useSuspenseInfiniteQuery({
         queryKey: pdxKeys.newSaves(),
         queryFn: ({ pageParam }) =>
-          fetchSaves({ cursor: pageParam }),
+          fetchOkJson<NewestSaveResponse>(
+            "/api/new" +
+              (!pageParam
+                ? ""
+                : `?${new URLSearchParams({
+                    cursor: pageParam,
+                  })}`)
+          ),
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage, _pages) => lastPage.cursor,
       }),
 
-    useRebalance: () =>
-      useMutation({
+    useRebalance: () => {
+      const queryClient = useQueryClient();
+      return useMutation({
         mutationFn: () => fetchOk("/api/admin/rebalance", { method: "POST" }),
-        onSuccess: invalidateSaves,
-      }),
+        onSuccess: invalidateSaves(queryClient),
+      })
+    },
 
-    useReprocess: () =>
-      useMutation({
+    useReprocess: () => {
+      const queryClient = useQueryClient();
+      return useMutation({
         mutationFn: (body: any) => sendJson("/api/admin/reprocess", { body }),
-        onSuccess: invalidateSaves,
-      }),
+        onSuccess: invalidateSaves(queryClient),
+      })
+    }
+      ,
 
-    useAdd: () =>
-      useMutation({
-        onSuccess: invalidateSaves,
+    useAdd: () => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        onSuccess: invalidateSaves(queryClient),
         mutationFn: async ({
           worker,
           dispatch,
@@ -196,7 +195,7 @@ export const pdxApi = {
 
             const fileData = await compression.compress(
               new Uint8Array(rawFileData),
-              compressProgress,
+              compressProgress
             );
             dispatch({ kind: "progress", progress: 50 });
 
@@ -228,7 +227,7 @@ export const pdxApi = {
               request.addEventListener("load", function (e) {
                 if (request.status >= 200 && request.status < 300) {
                   const response: SavePostResponse = JSON.parse(
-                    request.response,
+                    request.response
                   );
                   resolve(response);
                 } else {
@@ -264,7 +263,8 @@ export const pdxApi = {
             compression.release();
           }
         },
-      }),
+      });
+    }
   },
 
   save: {
@@ -277,21 +277,25 @@ export const pdxApi = {
       });
     },
 
-    useDelete: () =>
-      useMutation({
+    useDelete: () => {
+      const queryClient = useQueryClient();
+      return useMutation({
         mutationFn: (id: string) =>
           fetchOk(`/api/saves/${id}`, { method: "DELETE" }),
-        onSuccess: invalidateSaves,
-      }),
+        onSuccess: invalidateSaves(queryClient),
+      });
+    },
 
-    useUpdate: () =>
-      useMutation({
+    useUpdate: () => {
+      const queryClient = useQueryClient();
+      return useMutation({
         mutationFn: ({ id, ...rest }: SavePatchProps) =>
           sendJson(`/api/saves/${id}`, { body: rest, method: "PATCH" }),
         onSuccess: (_, { id }) => {
           queryClient.invalidateQueries({ queryKey: pdxKeys.save(id) });
         },
-      }),
+      });
+    },
 
     useOgMutation: () =>
       useMutation({
@@ -299,9 +303,17 @@ export const pdxApi = {
           sendJson(`/api/admin/og`, { body: { saveId: id } }),
       }),
   },
+
+  user: {
+    useGet: (userId: string) =>
+      useSuspenseQuery({
+        queryKey: pdxKeys.user(userId),
+        queryFn: () => fetchOkJson<UserSaves>(`/api/users/${userId}`),
+      }),
+  },
 };
 
-export const invalidateSaves = () => {
+export const invalidateSaves = (queryClient: QueryClient) => () => {
   queryClient.invalidateQueries({ queryKey: pdxKeys.newSaves() });
   queryClient.invalidateQueries({ queryKey: pdxKeys.saves() });
   queryClient.invalidateQueries({ queryKey: pdxKeys.achievements() });

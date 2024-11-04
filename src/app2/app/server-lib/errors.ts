@@ -21,9 +21,3 @@ export class NotFoundError extends Error {
     this.name = "NotFoundError";
   }
 }
-
-export const withErrorHandling = (handler: NextApiHandler): NextApiHandler => {
-  return async (req, res) => {
-    await handler(req, res);
-  };
-};

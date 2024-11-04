@@ -1,27 +1,39 @@
+import { check } from "@/lib/isPresent";
+import { createCookieSessionStorage } from "@remix-run/cloudflare";
 import { z } from "zod";
-import { useSession } from "vinxi/http";
 
-export function useAppSession() {
-  return useSession<SessionPayload | {}>({
+const { getSession, commitSession, destroySession } =
+  createCookieSessionStorage({
     cookie: {
+      name: "sid",
+      secrets: [check(import.meta.env.VITE_SESSION_SECRET)],
+      sameSite: "strict",
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
+      maxAge: 60 * 60 * 24 * 30,
     },
-    name: "sid",
-    password: import.meta.env["VITE_SESSION_SECRET"],
   });
+
+export {
+  getSession as getAppSession,
+  commitSession as commitAppSession,
+  destroySession as destroyAppSession,
+};
+
+export function newSession() {
+  return getSession();
 }
 
 export type PdxSession = Awaited<ReturnType<typeof usePdxSession>>;
 export type PdxUserSession = Extract<PdxSession, { kind: "user" }>;
-export async function usePdxSession() {
-  const session = await useAppSession();
-  if ("userId" in session.data) {
+export async function usePdxSession(cookie: string | null) {
+  const session = await getSession(cookie);
+  const parsed = SessionPayloadSchema.safeParse(session.data);
+  if (parsed.success) {
     return {
       kind: "user",
-      ...session.data,
-    } as const;
+      ...parsed.data,
+    } as const
   } else {
     return { kind: "guest" } as const;
   }
@@ -31,7 +43,6 @@ const SessionPayloadSchema = z.object({
   userId: z.string(),
   steamId: z.string(),
   account: z.enum(["free", "admin"]),
-});
+}).strict();
 
 export type SessionPayload = z.infer<typeof SessionPayloadSchema>;
-

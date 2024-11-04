@@ -8,41 +8,30 @@ import {
 } from "@/features/eu4/AchievementPage";
 import { seo } from "@/lib/seo";
 import { fetchAchievement, findAchievement } from "@/server-lib/fn/achievement";
-import { Await, createFileRoute, defer } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/start";
+import { defer, LoaderFunctionArgs, MetaFunction } from "@remix-run/cloudflare";
+import { Await, useLoaderData } from "@remix-run/react";
+import { Suspense } from "react";
+import { z } from "zod";
 
-export const findAchievementFn = createServerFn(
-  "GET",
-  (...args: Parameters<typeof findAchievement>) => {
-    return findAchievement(...args);
-  }
-);
+export const meta: MetaFunction<typeof loader> = ({ data }) =>
+  seo({
+    title: `${data?.achievement.name} Leaderboard`,
+    description: `Top EU4 saves for ${data?.achievement.name}: ${data?.achievement.description}`,
+  });
 
-export const fetchAchievementFn = createServerFn(
-  "GET",
-  (...args: Parameters<typeof fetchAchievement>) => {
-    return fetchAchievement(...args);
-  }
-);
+const ParamSchema = z.object({ achievementId: z.string() });
+export const loader = ({ params: rawParams }: LoaderFunctionArgs) => {
+  const params = ParamSchema.parse(rawParams);
+  const achievement = findAchievement(params);
+  const savesPromise = fetchAchievement(achievement);
+  return defer({
+    achievement,
+    savesPromise,
+  });
+};
 
-export const Route = createFileRoute("/eu4/achievements/$achievementId")({
-  loader: async ({ params }) => {
-    const achievement = await findAchievementFn(params);
-    return {
-      achievement,
-      savesPromise: defer(fetchAchievementFn(achievement)),
-    };
-  },
-  meta: ({ loaderData }) =>
-    seo({
-      title: `${loaderData.achievement.name} Leaderboard`,
-      description: `Top EU4 saves in a leaderboard for achievement ${loaderData.achievement.name}: ${loaderData.achievement.description}`,
-    }),
-  component: Eu4Achievement,
-});
-
-function Eu4Achievement() {
-  const { achievement, savesPromise } = Route.useLoaderData();
+export default function Eu4Achievement() {
+  const { achievement, savesPromise } = useLoaderData<typeof loader>();
   return (
     <WebPage>
       <AchievementLayout
@@ -60,9 +49,13 @@ function Eu4Achievement() {
             </div>
           )}
         >
-          <Await promise={savesPromise} fallback={<LoadingState />}>
-            {(saves) => <AchievementPage achievement={saves} />}
-          </Await>
+          <Suspense fallback={<LoadingState />}>
+            <Await resolve={savesPromise}>
+              {(saves: Awaited<ReturnType<typeof fetchAchievement>>) => (
+                <AchievementPage achievement={saves} />
+              )}
+            </Await>
+          </Suspense>
         </ErrorBoundary>
       </AchievementLayout>
     </WebPage>

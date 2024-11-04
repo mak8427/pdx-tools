@@ -66,7 +66,7 @@ export function identify(userId: string) {
 
 export function emitEvent({ kind, ...props }: Event) {
   log("Event", { kind, ...props });
-  if (process.env.NODE_ENV === "production") {
+  if (import.meta.env.PROD) {
     posthog.capture(kind, props);
   }
 }

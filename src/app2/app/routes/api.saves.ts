@@ -13,8 +13,8 @@ import {
 import { generateOgIntoS3 } from "@/server-lib/og";
 import { deleteFile, s3Keys, uploadFileToS3 } from "@/server-lib/s3";
 import { parseSave } from "@/server-lib/save-parser";
+import { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { json } from "@tanstack/start";
-import { createAPIFileRoute } from "@tanstack/start/api";
 
 async function fileUploadData(req: Request) {
   const maxFileSize = 20 * 1024 * 1024;
@@ -48,8 +48,12 @@ async function fileUploadData(req: Request) {
   }
 }
 
-export const Route = createAPIFileRoute("/api/saves")({
-  POST: withCore(
+export async function action({ request }: ActionFunctionArgs) {
+  if (request.method !== "POST") {
+    throw new Response("Method not allowed", { status: 405 });
+  }
+
+  return withCore(
     withAuth(async ({ request }, { session }) => {
       const { bytes, metadata } = await fileUploadData(request);
       const saveId = genId(12);
@@ -68,7 +72,7 @@ export const Route = createAPIFileRoute("/api/saves")({
 
         if (out.kind === "InvalidPatch") {
           throw new ValidationError(
-            `unsupported patch: ${out.patch_shorthand}`,
+            `unsupported patch: ${out.patch_shorthand}`
           );
         }
 
@@ -138,6 +142,6 @@ export const Route = createAPIFileRoute("/api/saves")({
           throw ex;
         }
       }
-    }),
-  ),
-});
+    })
+  )({ request });
+}

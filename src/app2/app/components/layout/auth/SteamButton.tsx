@@ -1,9 +1,8 @@
-import Link from "next/link";
-import React from "react";
+import { Link } from "@/components/Link";
 import steam_login_image from "./sign-in-through-steam.png";
 import { STEAM_URL } from "@/lib/steam";
 
-const externalAddress = process.env.NEXT_PUBLIC_EXTERNAL_ADDRESS;
+const externalAddress = import.meta.env.VITE_EXTERNAL_ADDRESS;
 let steamUrl: URL | undefined;
 if (externalAddress) {
   const params = {

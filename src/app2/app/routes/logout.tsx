@@ -1,18 +1,11 @@
-import { useAppSession } from "@/server-lib/auth/session";
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/start";
+import { getAppSession, destroyAppSession } from "@/server-lib/auth/session";
+import { ActionFunctionArgs, redirect } from "@remix-run/cloudflare";
 
-const logoutFn = createServerFn("POST", async () => {
-  const session = await useAppSession();
-
-  session.clear();
-
-  throw redirect({
-    href: "/",
-  });
-});
-
-export const Route = createFileRoute("/logout")({
-  preload: false,
-  loader: () => logoutFn(),
-});
+export async function action({ request }: ActionFunctionArgs) {
+    let session = await getAppSession(request.headers.get("Cookie"));
+    return redirect("/", {
+      headers: {
+        "Set-Cookie": await destroyAppSession(session),
+      },
+    });
+}

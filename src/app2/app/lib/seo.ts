@@ -4,7 +4,7 @@ export function seo({
 }: {
   title?: string;
   description?: string;
-}): React.JSX.IntrinsicElements["meta"][] {
+}) {
   const titles = title ? [{ title }, { name: "og:title", content: title }] : [];
 
   const descriptions = description

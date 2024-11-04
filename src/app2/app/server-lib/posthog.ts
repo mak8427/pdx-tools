@@ -1,14 +1,13 @@
 import { PostHog } from "posthog-node";
 import { log } from "./logging";
 
+const enabled = import.meta.env.PROD && import.meta.env.VITE_POSTHOG_KEY 
 function createPostHogClient() {
-  return new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+  return new PostHog(import.meta.env.VITE_POSTHOG_KEY, {
     host: "https://eu.i.posthog.com",
     flushAt: 1,
     flushInterval: 0,
-    disabled:
-      process.env.NODE_ENV === "development" ||
-      !process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    disabled: !enabled
   });
 }
 
@@ -19,7 +18,7 @@ export function getPostHogClient() {
 
 export async function flushEvents() {
   try {
-    if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+    if (enabled) {
       // TODO: use `waituntil`
       await getPostHogClient().shutdown();
     }
@@ -33,7 +32,7 @@ export function captureEvent({
   event,
   ...rest
 }: { userId: string; event: string } & Record<string, string>) {
-  if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+  if (enabled) {
     getPostHogClient().capture({ distinctId: userId, event, properties: rest });
   }
 }

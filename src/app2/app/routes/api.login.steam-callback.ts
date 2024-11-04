@@ -1,5 +1,4 @@
-import { useAppSession } from "@/server-lib/auth/session";
-import { createAPIFileRoute } from "@tanstack/start/api";
+import { commitAppSession, getAppSession, newSession } from "@/server-lib/auth/session";
 import { dbPool, table } from "@/server-lib/db";
 import { getEnv } from "@/server-lib/env";
 import { ValidationError } from "@/server-lib/errors";
@@ -10,62 +9,58 @@ import { check } from "@/lib/isPresent";
 import { STEAM_URL } from "@/lib/steam";
 import { log } from "@/server-lib/logging";
 import { withCore } from "@/server-lib/middleware";
+import { LoaderFunctionArgs, redirect } from "@remix-run/cloudflare";
 
-export const Route = createAPIFileRoute("/api/login/steam-callback")({
-  GET: withCore(async ({ request }) => {
-    const searchParams = new URL(request.url).searchParams;
+export const loader = withCore(async ({ request }: LoaderFunctionArgs) => {
+  const searchParams = new URL(request.url).searchParams;
 
-    const { steamUid, steamName, genUserId } =
-      process.env.NODE_ENV === "production"
-        ? await steamInfo(searchParams)
-        : testInfo();
+  const { steamUid, steamName, genUserId } =
+    process.env.NODE_ENV === "production"
+      ? await steamInfo(searchParams)
+      : testInfo();
 
-    const db = dbPool().orm;
-    const users = await db
-      .insert(table.users)
-      .values({
-        userId: genUserId,
-        steamId: steamUid,
-        steamName: steamName,
-        account: process.env.NODE_ENV === "production" ? "free" : "admin",
-      })
-      .onConflictDoUpdate({
-        target: table.users.steamId,
-        set: { steamName: sql.raw(`excluded.${table.users.steamName.name}`) },
-      })
-      .returning({
-        userId: table.users.userId,
-        account: table.users.account,
-        inserted: sql<boolean>`(xmax = 0)`,
-      });
-
-    const user = check(users.at(0), "expected user");
-    log.event({
-      userId: user.userId,
-      event: user.inserted ? "User created" : "User updated",
-    });
-
-    const prodDest =
-      process.env.NEXT_PUBLIC_EXTERNAL_ADDRESS ?? "https://pdx.tools";
-    const dest =
-      process.env.NODE_ENV === "production"
-        ? prodDest
-        : new URL("/", request.url);
-
-    const session = await useAppSession();
-    await session.update({
-      userId: user.userId,
+  const db = dbPool().orm;
+  const users = await db
+    .insert(table.users)
+    .values({
+      userId: genUserId,
       steamId: steamUid,
-      account: user.account,
+      steamName: steamName,
+      account: process.env.NODE_ENV === "production" ? "free" : "admin",
+    })
+    .onConflictDoUpdate({
+      target: table.users.steamId,
+      set: { steamName: sql.raw(`excluded.${table.users.steamName.name}`) },
+    })
+    .returning({
+      userId: table.users.userId,
+      account: table.users.account,
+      inserted: sql<boolean>`(xmax = 0)`,
     });
 
-    return new Response(null, {
-      status: 302,
-      headers: {
-        location: `${dest}`,
-      },
-    });
-  }),
+  const user = check(users.at(0), "expected user");
+  log.event({
+    userId: user.userId,
+    event: user.inserted ? "User created" : "User updated",
+  });
+
+  const prodDest = process.env.VITE_EXTERNAL_ADDRESS ?? "https://pdx.tools";
+  const dest =
+    process.env.NODE_ENV === "production"
+      ? prodDest
+      : new URL("/", request.url);
+
+  const session = await newSession();
+  session.set("userId", user.userId);
+  session.set("steamId", steamUid);
+  session.set("account", user.account);
+  const cookie = await commitAppSession(session);
+
+  return redirect(`${dest}`, {
+    headers: {
+      "Set-Cookie": cookie,
+    }
+  })
 });
 
 async function steamInfo(searchParams: URLSearchParams) {
@@ -109,7 +104,7 @@ async function getPlayerName(steamUid: string) {
     ["steamids", steamUid],
   ]);
   const body = await fetchOkJson(
-    `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002?${params}`,
+    `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002?${params}`
   );
   const name = body?.response?.players?.[0]?.personaname;
   if (typeof name !== "string") {

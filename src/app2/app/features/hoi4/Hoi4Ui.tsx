@@ -1,21 +1,19 @@
-import Head from "next/head";
 import { getHoi4Worker } from "./worker";
 import { MeltButton } from "@/components/MeltButton";
 import { Alert } from "@/components/Alert";
 import { getErrorMessage } from "@/lib/getErrorMessage";
 import { CountryDetails } from "./CountryDetails";
 import { Hoi4StoreProvider, hoi4, useLoadHoi4 } from "./store";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export const Hoi4Page = () => {
   const meta = hoi4.useMeta();
   const saveFile = hoi4.useSaveInput();
+  useDocumentTitle(
+    `${saveFile.name.replace(".hoi4", "")} - Hoi4 (${meta.date}) - PDX Tools`
+  );
   return (
     <main className="mx-auto mt-4 max-w-screen-lg">
-      <Head>
-        <title>{`${saveFile.name.replace(".hoi4", "")} - Hoi4 (${
-          meta.date
-        }) - PDX Tools`}</title>
-      </Head>
       <div className="mx-auto flex max-w-prose flex-col gap-4">
         <h2 className="text-2xl font-bold">Hoi4</h2>
         <p>

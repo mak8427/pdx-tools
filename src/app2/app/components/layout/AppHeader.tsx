@@ -4,13 +4,12 @@ import { AnnouncementBar } from "./AnnouncementBar";
 import { useEngineActions } from "@/features/engine";
 import { NavigationMenu } from "@/components/NavigationMenu";
 import { Link } from "@/components/Link";
-import { sessionSelect } from "@/services/appApi";
 import { SignInButtons } from "./auth";
 import { Button } from "@/components/Button";
 import { UserIcon } from "@heroicons/react/24/outline";
 import { DiscordIcon, GithubIcon } from "../icons";
-import { resetLogging } from "@/lib/events";
 import { useSession } from "@/features/account";
+import { Form } from "@remix-run/react";
 
 const HeaderMenu = () => {
   const session = useSession();
@@ -119,7 +118,7 @@ const HeaderMenu = () => {
 
                 <NavigationMenu.Content className="items-center bg-slate-900 p-4">
                   <NavigationMenu.Link variant="button" asChild>
-                    <Link variant="ghost" href="/account">
+                    <Link variant="ghost" to="/account">
                       Accout
                     </Link>
                   </NavigationMenu.Link>
@@ -131,22 +130,15 @@ const HeaderMenu = () => {
                   >
                     <Link
                       variant="ghost"
-                      to="/users/$userId"
-                      params={{ userId: session.userId }}
+                      to={`/users/${session.userId}`}
                     >
                       My Saves
                     </Link>
                   </NavigationMenu.Link>
                   <NavigationMenu.Link variant="button" asChild>
-                    <Link
-                      variant="ghost"
-                      to="/logout"
-                      onClick={() => {
-                        resetLogging();
-                      }}
-                    >
-                      Logout
-                    </Link>
+                    <Form action="/logout" method="post">
+                      <button type="submit">Logout</button>
+                    </Form>
                   </NavigationMenu.Link>
                 </NavigationMenu.Content>
               </NavigationMenu.Item>

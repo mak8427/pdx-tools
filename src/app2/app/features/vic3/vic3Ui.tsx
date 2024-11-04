@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import Head from "next/head";
 import { getVic3Worker } from "./worker";
 import { CountryStatsTable } from "./CountryStats";
 import { CountryMarketTable } from "./CountryMarket";
@@ -17,6 +16,7 @@ import {
 } from "./store";
 import { useVic3Worker } from "./worker/useVic3Worker";
 import { ExportDataButton } from "./ExportDataButton";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export const Vic3Page = () => {
   const meta = useVic3Meta();
@@ -25,23 +25,21 @@ export const Vic3Page = () => {
   const { data: stats } = useVic3Worker(
     useCallback(
       (worker) => worker.get_country_stats(selectedTag),
-      [selectedTag],
-    ),
+      [selectedTag]
+    )
   );
   const { data: prices } = useVic3Worker(
     useCallback(
       (worker) => worker.get_country_goods_prices(selectedTag),
-      [selectedTag],
-    ),
+      [selectedTag]
+    )
+  );
+  useDocumentTitle(
+    `${filename.replace(".v3", "")} - Vic3 (${meta.date}) - PDX Tools`
   );
 
   return (
     <main className="mx-auto mt-4">
-      <Head>
-        <title>{`${filename.replace(".v3", "")} - Vic3 (${
-          meta.date
-        }) - PDX Tools`}</title>
-      </Head>
       <div className="flex flex-col items-center gap-8">
         <div className="mx-auto flex max-w-prose flex-col gap-4">
           <h2 className="text-2xl font-bold">Vic3</h2>

@@ -1,28 +1,22 @@
-import { NextApiHandler } from "next";
 import {
   AuthorizationError,
   NotFoundError,
   ValidationError,
-  withErrorHandling,
 } from "./errors";
-import { log, withLogger } from "./logging";
+import { log } from "./logging";
 import { ZodError } from "zod";
 import { flushEvents } from "./posthog";
-import { json } from "@tanstack/start";
+import { json } from "@remix-run/cloudflare";
 
-export const withCoreMiddleware = (fn: NextApiHandler): NextApiHandler => {
-  return withLogger(withErrorHandling(fn));
-};
-
-export function withCore<T extends Array<any>>(
-  fn: (...args: T) => Promise<any>,
+export function withCore<T extends Array<any>, R>(
+  fn: (...args: T) => Promise<R>,
 ) {
   return function (...args: T) {
     return fn(...args)
       .catch((err) => {
         if (!(err instanceof Error)) {
           log.exception(err, { msg: "unknown exception" });
-          return json({ msg: `unknown exception` }, { status: 500 });
+          throw json({ msg: `unknown exception` }, { status: 500 });
         }
 
         const obj = {
@@ -31,13 +25,13 @@ export function withCore<T extends Array<any>>(
         };
 
         if (err.name === ValidationError.name) {
-          return json(obj, { status: 400 });
+          throw json(obj, { status: 400 });
         } else if (err instanceof AuthorizationError) {
-          return json(obj, { status: 403 });
+          throw json(obj, { status: 403 });
         } else if (err instanceof NotFoundError) {
-          return json({ ...obj, msg: `${obj.msg} not found` }, { status: 404 });
+          throw json({ ...obj, msg: `${obj.msg} not found` }, { status: 404 });
         } else if (err instanceof ZodError) {
-          return json(
+          throw json(
             {
               name: "ValidationError",
               msg: JSON.stringify(err.flatten().fieldErrors),
@@ -46,7 +40,7 @@ export function withCore<T extends Array<any>>(
           );
         } else {
           log.exception(err, { msg: "unexpected exception" });
-          return json(obj, { status: 500 });
+          throw json(obj, { status: 500 });
         }
       })
       .finally(flushEvents);

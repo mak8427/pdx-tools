@@ -1,13 +1,21 @@
-import {
+import init, {
   initSync,
   achievements,
   eu4_days_to_date,
   latest_eu4_minor_patch,
   type Achievement,
 } from "./wasm/wasm_app";
-import wasmApp from "./wasm/wasm_app_bg.wasm?module";
 
-initSync(wasmApp);
+if (typeof WebSocketPair !== "undefined") {
+  const wasmApp = await import("./wasm/wasm_app_bg.wasm");
+  initSync(wasmApp);
+} else {
+  const wasmUrl = await import("./wasm/wasm_app_bg.wasm?url");
+  const url = `.${wasmUrl.default}`;
+  const fs = await import("node:fs/promises")
+  const data = await fs.readFile(url);
+  await init(data);
+}
 
 const withWasm = <T extends Array<any>, U>(fn: (...args: T) => U) => {
   return (...args: T): U => {

@@ -27,7 +27,7 @@ const columns = [
         <div className="flex flex-col space-y-2">
           <Link
             className="font-bold"
-            href={`/eu4/achievements/${info.row.original.id}`}
+            to={`/eu4/achievements/${info.row.original.id}`}
           >
             {info.row.original.name}
           </Link>

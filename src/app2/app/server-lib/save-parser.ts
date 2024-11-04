@@ -14,7 +14,7 @@ export const parseSave = (data: BodyInit) =>
 
 
 export const convertScreenshot = async (png: ArrayBuffer) => {
-    const endpoint = check(process.env["PARSE_API_ENDPOINT"]);
+    const endpoint = check(import.meta.env["VITE_PARSE_API_ENDPOINT"]);
     return fetchOk(`${endpoint}/webp`, {
       method: "POST",
       body: png,

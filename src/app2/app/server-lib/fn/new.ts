@@ -1,7 +1,5 @@
 import { dbPool, saveView, table, toApiSave } from "@/server-lib/db";
-import { createServerFn, json } from "@tanstack/start";
 import { sql, eq, lt, desc } from "drizzle-orm";
-import { getEvent } from "vinxi/http";
 import { z } from "zod";
 
 const NewSchema = z.object({
@@ -12,9 +10,7 @@ const NewSchema = z.object({
   cursor: z.string().nullish(),
 });
 
-export type NewestSaveResponse = Awaited<ReturnType<typeof fetchSaves>>;
-
-async function getSaves(params: z.infer<typeof NewSchema>) {
+export async function getSaves(params: z.infer<typeof NewSchema>) {
   const db = dbPool().orm;
 
   const query = db
@@ -52,11 +48,3 @@ async function getSaves(params: z.infer<typeof NewSchema>) {
 
   return { saves: result, cursor: cursorRes };
 }
-
-export const fetchSaves = createServerFn("GET", (opts: {
-    cursor?: string | null;
-}) => {
-//   const searchParams = new URL(ctx.request.url).searchParams;
-//   const params = NewSchema.parse(Object.fromEntries(searchParams.entries()));
-  return getSaves({pageSize: 10, ...opts});
-});

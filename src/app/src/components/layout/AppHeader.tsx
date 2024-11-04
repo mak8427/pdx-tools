@@ -125,7 +125,7 @@ const HeaderMenu = () => {
 
                 <NavigationMenu.Content className="items-center bg-slate-900 p-4">
                   <NavigationMenu.Link variant="button" asChild>
-                    <Link variant="ghost" href="/account">
+                    <Link variant="ghost" to="/account">
                       Accout
                     </Link>
                   </NavigationMenu.Link>

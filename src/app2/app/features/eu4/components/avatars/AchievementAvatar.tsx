@@ -1,8 +1,8 @@
 import React from "react";
 import { Sprite, SpriteDimension, spriteDimension } from "../Sprite";
-import Link from "next/link";
 import data from "@/images/eu4/achievements/achievements.json";
 import achievementImage from "@/images/eu4/achievements/achievements.webp";
+import { Link } from "@/components/Link";
 
 type AchievementAvatarProps = {
   id: number | string;

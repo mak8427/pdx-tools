@@ -1,5 +1,4 @@
 import { fetchOk } from "@/lib/fetch";
-import { getEnv } from "./env";
 import { s3FetchOk, s3Keys } from "./s3";
 import { log } from "./logging";
 import { timeit } from "@/lib/timeit";
@@ -7,7 +6,7 @@ import { convertScreenshot } from "./save-parser";
 
 export async function generateOgIntoS3(saveId: string) {
   const url =
-    process.env.NODE_ENV === "production"
+    import.meta.env.PROD
       ? "https://pdx.tools"
       : "http://localhost:3001";
 
@@ -34,8 +33,9 @@ export async function generateOgIntoS3(saveId: string) {
   const bust = await new Promise((res) => res("default"));
   const cmd = ["export", bust, puppeteerCmd].join(" ");
 
-  const puppeteerUrl = new URL(getEnv("PUPPETEER_URL") + "/download");
-  puppeteerUrl.searchParams.set("token", getEnv("PUPPETEER_TOKEN"));
+  const puppeteerUrl = new URL(import.meta.env.VITE_PUPPETEER_URL + "/download");
+  log.info({ msg: "requesting og creation", puppeteerUrl, key: saveId })
+  puppeteerUrl.searchParams.set("token", import.meta.env.VITE_PUPPETEER_TOKEN);
 
   const pngBuffer = await timeit(() =>
     fetchOk(puppeteerUrl, {

@@ -1,7 +1,6 @@
 import { useReducer, useEffect } from "react";
 import { logMs } from "@/lib/log";
 import { timeit } from "@/lib/timeit";
-import Head from "next/head";
 import { getImperatorWorker } from "./worker";
 import { MeltButton } from "@/components/MeltButton";
 import { ImperatorMetadata } from "./worker/types";
@@ -10,17 +9,18 @@ import { Alert } from "@/components/Alert";
 import { getErrorMessage } from "@/lib/getErrorMessage";
 import { pdxAbortController } from "@/lib/abortController";
 import { captureException } from "@/lib/captureException";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export type ImperatorSaveFile = { save: { file: File } };
 type ImperatorPageProps = ImperatorSaveFile & { meta: ImperatorMetadata };
 export const ImperatorPage = ({ save, meta }: ImperatorPageProps) => {
+  useDocumentTitle(
+    `${save.file.name.replace(".rome", "")} - Imperator (${
+      meta.date
+    }) - PDX Tools`
+  );
   return (
     <main className="mx-auto mt-4 max-w-screen-lg">
-      <Head>
-        <title>{`${save.file.name.replace(".rome", "")} - Imperator (${
-          meta.date
-        }) - PDX Tools`}</title>
-      </Head>
       <div className="mx-auto flex max-w-prose flex-col gap-4">
         <h2 className="text-2xl font-bold">Imperator</h2>
         <p>
@@ -90,7 +90,7 @@ type ImperatorLoadActions =
 
 const loadStateReducer = (
   state: ImperatorLoadState,
-  action: ImperatorLoadActions,
+  action: ImperatorLoadActions
 ): ImperatorLoadState => {
   switch (action.kind) {
     case "start": {

@@ -1,21 +1,18 @@
 import Eu4Ui from "@/features/eu4/Eu4Ui";
-import { createFileRoute } from "@tanstack/react-router";
+import { MetaFunction } from "@remix-run/cloudflare";
+import { useParams } from "@remix-run/react";
 import { useMemo } from "react";
 
-export const Route = createFileRoute("/eu4/saves/$saveId")({
-  component: SaveComponent,
-  meta({ params: { saveId } }) {
-    return [
-      { name: "twitter:image", content: `/eu4/saves/${saveId}/og.webp` },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "og:image", content: `/eu4/saves/${saveId}/og.webp` },
-    ];
-  },
-});
-
-function SaveComponent() {
-  const { saveId } = Route.useParams();
-  return <SavePage saveId={saveId} />;
+export const meta: MetaFunction = ({ params: { saveId } }) => {
+  return [
+    { name: "twitter:image", content: `/eu4/saves/${saveId}/og.webp` },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "og:image", content: `/eu4/saves/${saveId}/og.webp` },
+  ];
+}
+export default function SaveRoute() {
+  const { saveId } = useParams();
+  return <SavePage saveId={saveId!} />;
 }
 
 type SaveProps = {

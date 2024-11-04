@@ -1,4 +1,3 @@
-import React from "react";
 import { SaveWarnings } from "./components/SaveWarnings";
 import { InfoSideBarButton } from "@/features/eu4/features/info";
 import { ChartSideBarButton } from "@/features/eu4/features/charts";
@@ -6,10 +5,8 @@ import { CountrySideBarButton } from "@/features/eu4/features/country-details";
 import { ProvinceSelectListener } from "./features/map/ProvinceSelectListener";
 import { UploadSideBarButton } from "@/features/eu4/features/upload";
 import { MapZoomSideBar } from "./components/zoom";
-import Head from "next/head";
 import {
   useEu4Actions,
-  useEu4Map,
   useEu4MapMode,
   useEu4Meta,
   useIsServerSaveFile,
@@ -30,6 +27,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { ChartAreaIcon } from "@/components/icons/ChartAreaIcon";
 import { FileSyncIcon } from "@/components/icons/FileSyncIcon";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export const Eu4CanvasOverlay = () => {
   const serverFile = useIsServerSaveFile();
@@ -39,16 +37,14 @@ export const Eu4CanvasOverlay = () => {
   const actions = useEngineActions();
   const mapMode = useEu4MapMode();
   const eu4Actions = useEu4Actions();
-
-  return (
-    <>
-      <Head>
-        <title>{`${filename.replace(".eu4", "")} (${meta.date}) - EU4 (${
+  useDocumentTitle(`${filename.replace(".eu4", "")} (${meta.date}) - EU4 (${
           meta.savegame_version.first
         }.${meta.savegame_version.second}.${
           meta.savegame_version.third
-        }) - PDX Tools`}</title>
-      </Head>
+        }) - PDX Tools`)
+
+  return (
+    <>
       <div className="flex h-full flex-col gap-2 py-4 text-white">
         <div className="flex justify-end overflow-hidden whitespace-nowrap">
           <SideBarButton
